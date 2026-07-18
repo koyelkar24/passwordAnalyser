@@ -61,8 +61,18 @@ def check_breach():
     password = data.get('password', '')
 
     if not password:
-        return jsonify({"error": "Empty password"}), 400
+        return jsonify({"error": "Empty password", "message": "No password provided"}), 400
 
+    # Local Brute Force Wordlist Check First
+    is_common = any(word in password.lower() for word in COMMON_WORDS)
+    if is_common:
+        return jsonify({
+            "compromised": True,
+            "count": 999999,
+            "message": "Too common! Vulnerable to brute-force dictionary attacks."
+        }), 200
+
+    # Secure HIBP Range API Call
     sha1_hash = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
     prefix = sha1_hash[:5]
     suffix = sha1_hash[5:]
@@ -73,9 +83,9 @@ def check_breach():
     try:
         response = requests.get(url, headers=headers, timeout=5)
         if response.status_code != 200:
-            return jsonify({"status": "error", "message": "API Unavailable"}), 502
+            return jsonify({"compromised": False, "message": "Breach DB API currently busy"}), 502
     except requests.RequestException:
-        return jsonify({"status": "error", "message": "Network Timeout"}), 504
+        return jsonify({"compromised": False, "message": "Breach check network timeout"}), 504
 
     hashes = (line.split(':') for line in response.text.splitlines())
     match_count = 0
