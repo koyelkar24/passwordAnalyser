@@ -1,11 +1,12 @@
 import math
 import hashlib
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import requests
 import zxcvbn
+import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.')
 CORS(app)
 
 COMMON_WORDS = ['password', '123456', 'qwerty', 'letmein', 'admin', 'welcome',
@@ -23,6 +24,11 @@ def calc_entropy(pw):
     if pool_size == 0:
         return 0
     return round(len(pw) * math.log2(pool_size))
+
+# Add this route to serve your HTML file
+@app.route('/')
+def serve_index():
+    return send_from_directory('.', 'index.html')
 
 @app.route('/api/health', methods=['GET'])
 def health():
@@ -83,7 +89,6 @@ def check_breach():
     try:
         response = requests.get(url, headers=headers, timeout=5)
         if response.status_code != 200:
-            # Change to 200 to keep the UI graceful during external API structural hiccups
             return jsonify({"compromised": False, "message": "Breach DB API currently busy"}), 200
     except requests.RequestException:
         return jsonify({"compromised": False, "message": "Breach check network timeout"}), 200
@@ -108,3 +113,7 @@ def check_breach():
             "count": 0,
             "message": "Safe! Not found in database leaks."
         }), 200
+
+# This is needed for Vercel
+if __name__ == '__main__':
+    app.run(debug=True)
