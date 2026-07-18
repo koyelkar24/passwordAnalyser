@@ -548,7 +548,7 @@ const statusBox = document.getElementById('statusBox');
 
 const commonWords = ['password','123456','qwerty','letmein','admin','welcome','monkey','dragon','football','iloveyou','abc123'];
 
-// --- Check backend availability on load ---
+// --- Cleaned up relative paths for root structure layout ---
 async function checkServerHealth(){
   try{
     const res = await fetch('/api/health', { method:'GET' });
@@ -678,7 +678,7 @@ function setSuggestions(flags){
 
 pwInput.addEventListener('input', () => analyze(pwInput.value));
 
-// --- Breach check ---
+// --- Cleaned up breach routing URL path ---
 breachSub.addEventListener('click', async () => {
   const pw = pwInput.value;
   if(!pw){
