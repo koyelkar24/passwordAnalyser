@@ -83,9 +83,10 @@ def check_breach():
     try:
         response = requests.get(url, headers=headers, timeout=5)
         if response.status_code != 200:
-            return jsonify({"compromised": False, "message": "Breach DB API currently busy"}), 502
+            # Change to 200 to keep the UI graceful during external API structural hiccups
+            return jsonify({"compromised": False, "message": "Breach DB API currently busy"}), 200
     except requests.RequestException:
-        return jsonify({"compromised": False, "message": "Breach check network timeout"}), 504
+        return jsonify({"compromised": False, "message": "Breach check network timeout"}), 200
 
     hashes = (line.split(':') for line in response.text.splitlines())
     match_count = 0
@@ -100,10 +101,10 @@ def check_breach():
             "compromised": True,
             "count": match_count,
             "message": f"Exposed in {match_count:,} known data leaks!"
-        })
+        }), 200
     else:
         return jsonify({
             "compromised": False,
             "count": 0,
             "message": "Safe! Not found in database leaks."
-        })
+        }), 200
