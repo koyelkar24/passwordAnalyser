@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyberPure Password Analyzer</title>
+<style>
+  :root{
+    --bg-0:#04080d;
+    --bg-1:#060d15;
+    --cyan:#39d7f5;
+    --cyan-soft:#7fe6ff;
+    --cyan-dim:#0e2b38;
+    --border:#123846;
+    --amber:#ffc94a;
+    --green:#33e19b;
+    --text-dim:#7fa6b3;
+    --text-mid:#a9c7d1;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 50% 0%, #0a1720 0%, #030608 70%);
+    font-family:'Segoe UI', 'Inter', system-ui, sans-serif;
+    padding:30px 10px;
+  }
+
+  .panel{
+    position:relative;
+    width:100%;
+    max-width:1300px;
+    background:linear-gradient(180deg,#050b11 0%, #030608 100%);
+    border:1px solid var(--border);
+    border-radius:14px;
+    box-shadow:
+      0 0 0 1px rgba(57,215,245,0.05),
+      0 0 60px rgba(20,150,190,0.08),
+      inset 0 0 80px rgba(0,20,30,0.5);
+    padding:36px 44px 26px;
+    overflow:hidden;
+  }
+
+  .panel::before{
+    content:"";
+    position:absolute;
+    inset:10px;
+    border:1px solid rgba(57,215,245,0.15);
+    border-radius:10px;
+    pointer-events:none;
+  }
+
+  .corner{
+    position:absolute;
+    width:140px;
+    height:140px;
+    pointer-events:none;
+    opacity:0.35;
+  }
+  .corner svg{width:100%;height:100%;}
+  .corner.tl{top:14px;left:14px;}
+  .corner.br{bottom:14px;right:14px; transform:rotate(180deg);}
+
+  header{
+    position:relative;
+    z-index:2;
+    display:flex;
+    justify-content:center;
+    padding:0 240px;
+  }
+
+  .title-block{
+    text-align:center;
+    max-width:700px;
+  }
+
+  .title-block h1{
+    margin:0;
+    font-size:38px;
+    letter-spacing:3px;
+    font-weight:800;
+    line-height:1.2;
+    text-align:center;
+    background:linear-gradient(180deg,#eafcff, #57d6f2 60%, #1c8fae);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    text-shadow:0 0 25px rgba(57,215,245,0.35);
+  }
+
+  .nav-line{
+    margin-top:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    color:var(--cyan-soft);
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:1px;
+  }
+  .nav-line .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--cyan);
+    box-shadow:0 0 8px var(--cyan);
+  }
+  .nav-line .bar{
+    height:1px;
+    width:60px;
+    background:linear-gradient(90deg, rgba(57,215,245,0.6), transparent);
+  }
+
+  .status-box{
+    position:absolute;
+    top:36px;
+    right:44px;
+    border:1px solid var(--border);
+    background:rgba(10,25,32,0.6);
+    border-radius:8px;
+    padding:12px 20px;
+    text-align:left;
+    min-width:200px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    z-index:3;
+  }
+  .status-box .lock{
+    font-size:20px;
+    color:var(--green);
+  }
+  .status-box .label{
+    font-size:11px;
+    letter-spacing:1.5px;
+    color:var(--text-dim);
+    margin-bottom:2px;
+  }
+  .status-box .value{
+    font-size:16px;
+    font-weight:700;
+    color:var(--green);
+    letter-spacing:1px;
+  }
+  .status-box.offline .lock{color:#ff6b6b;}
+  .status-box.offline .value{color:#ff6b6b;}
+
+  section{
+    position:relative;
+    z-index:2;
+    margin-top:30px;
+  }
+
+  .section-label{
+    font-size:12px;
+    letter-spacing:2px;
+    color:var(--cyan-soft);
+    font-weight:700;
+    margin-bottom:10px;
+  }
+
+  .input-wrap{
+    position:relative;
+    display:flex;
+    align-items:center;
+  }
+
+  .input-wrap input{
+    width:100%;
+    background:rgba(6,14,20,0.8);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:16px 46px 16px 18px;
+    color:#dfeef2;
+    font-size:15px;
+    outline:none;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .input-wrap input::placeholder{color:#4d6a75;}
+  .input-wrap input:focus{
+    border-color:var(--cyan);
+    box-shadow:0 0 0 3px rgba(57,215,245,0.12);
+  }
+  .eye-btn{
+    position:absolute;
+    right:14px;
+    background:none;
+    border:none;
+    color:var(--text-dim);
+    cursor:pointer;
+    font-size:18px;
+    padding:4px;
+  }
+  .eye-btn:hover{color:var(--cyan-soft);}
+
+  .strength-row{
+    display:flex;
+    align-items:center;
+    gap:18px;
+  }
+  .track{
+    flex:1;
+    height:10px;
+    border-radius:6px;
+    background:#0c1c24;
+    border:1px solid var(--border);
+    position:relative;
+    overflow:visible;
+  }
+  .fill{
+    height:100%;
+    border-radius:6px;
+    width:0%;
+    background:linear-gradient(90deg,#1782a3,#39d7f5);
+    box-shadow:0 0 12px rgba(57,215,245,0.6);
+    transition:width .35s ease, background .35s ease;
+  }
+  .thumb{
+    position:absolute;
+    top:50%;
+    width:16px;height:16px;
+    border-radius:50%;
+    background:var(--cyan-soft);
+    box-shadow:0 0 10px var(--cyan), 0 0 4px #fff;
+    transform:translate(-50%,-50%);
+    left:0%;
+    transition:left .35s ease, background .35s ease;
+  }
+  .strength-pct{
+    min-width:80px;
+    text-align:right;
+  }
+  .strength-pct .pct{
+    font-size:20px;
+    font-weight:800;
+    color:var(--amber);
+    display:block;
+    line-height:1;
+  }
+  .strength-pct .lvl{
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:1px;
+    color:var(--amber);
+  }
+
+  .score-box{
+    margin-top:26px;
+    border:1px solid var(--cyan);
+    border-radius:12px;
+    background:rgba(6,16,22,0.5);
+    box-shadow:0 0 25px rgba(57,215,245,0.15), inset 0 0 30px rgba(57,215,245,0.05);
+    padding:26px 20px;
+    text-align:center;
+  }
+  .score-label{
+    font-size:12px;
+    letter-spacing:2px;
+    color:var(--cyan-soft);
+    font-weight:700;
+    margin-bottom:8px;
+  }
+  .score-value{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    font-size:34px;
+    font-weight:800;
+    color:#eafcff;
+  }
+  .score-value .max{
+    font-size:20px;
+    color:var(--text-dim);
+    font-weight:600;
+  }
+  .shield-icon{
+    font-size:26px;
+    color:var(--cyan);
+  }
+  .risk-note{
+    margin-top:10px;
+    font-size:13px;
+    color:var(--text-mid);
+  }
+
+  .grid4{
+    margin-top:24px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:18px;
+  }
+  .stat-card{
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:rgba(8,18,24,0.55);
+    padding:18px 18px;
+  }
+  .stat-top{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:11px;
+    letter-spacing:1px;
+    color:var(--text-dim);
+    margin-bottom:8px;
+    font-weight:700;
+  }
+  .stat-top .icon{font-size:16px;}
+  .stat-main{
+    font-size:22px;
+    font-weight:800;
+    color:#eafcff;
+    margin-bottom:4px;
+  }
+  .stat-sub{
+    font-size:12px;
+    color:var(--text-dim);
+  }
+  .stat-sub.link{
+    color:var(--cyan-soft);
+    cursor:pointer;
+  }
+  .stat-sub.warn{color:var(--amber);}
+  .stat-sub.good{color:var(--green);}
+  .stat-sub.bad{color:#ff6b6b;}
+
+  .suggestions{
+    margin-top:22px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:20px 24px;
+    background:rgba(8,18,24,0.4);
+  }
+  .suggestions h3{
+    margin:0 0 12px;
+    font-size:13px;
+    letter-spacing:1.5px;
+    color:var(--cyan-soft);
+  }
+  .suggestions ul{
+    list-style:none;
+    margin:0;padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .suggestions li{
+    font-size:13.5px;
+    color:var(--text-mid);
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .suggestions li::before{
+    content:"›";
+    color:var(--cyan);
+    font-weight:800;
+  }
+  .suggestions li.ok{color:#5fdc9a;}
+  .suggestions li.ok::before{content:"✓"; color:#5fdc9a;}
+
+  .generate-btn{
+    margin-top:24px;
+    width:100%;
+    padding:16px;
+    border-radius:10px;
+    border:1px solid var(--cyan);
+    background:rgba(57,215,245,0.06);
+    color:var(--cyan-soft);
+    font-size:14px;
+    font-weight:800;
+    letter-spacing:1.5px;
+    cursor:pointer;
+    transition:all .2s;
+    box-shadow:0 0 20px rgba(57,215,245,0.08);
+  }
+  .generate-btn:hover{
+    background:rgba(57,215,245,0.16);
+    box-shadow:0 0 26px rgba(57,215,245,0.35);
+  }
+
+  footer{
+    margin-top:22px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:12px;
+    color:var(--text-dim);
+    border-top:1px solid var(--border);
+    padding-top:16px;
+    position:relative;
+    z-index:2;
+  }
+  footer .left{display:flex;align-items:center;gap:8px;}
+  footer .left .warn-icon{color:var(--amber);}
+  footer .left .status-ok{color:var(--green); font-weight:600;}
+  footer .center{color:var(--cyan-soft); letter-spacing:1px;}
+  footer .right{display:flex;gap:14px;}
+
+  @media (max-width:900px){
+    .grid4{grid-template-columns:repeat(2,1fr);}
+    header{padding:0; flex-direction:column; align-items:center; gap:60px;}
+    .status-box{position:static; margin-top:6px;}
+    .title-block h1{font-size:26px;}
+    footer{flex-direction:column; gap:10px; text-align:center;}
+  }
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <div class="corner tl">
+    <svg viewBox="0 0 140 140" fill="none" stroke="#39d7f5" stroke-width="1.2">
+      <path d="M5 40 L5 5 L60 5"/>
+      <circle cx="5" cy="40" r="3" fill="#39d7f5"/>
+      <circle cx="60" cy="5" r="2" fill="#39d7f5"/>
+      <path d="M5 70 L30 70 L30 100"/>
+    </svg>
+  </div>
+  <div class="corner br">
+    <svg viewBox="0 0 140 140" fill="none" stroke="#39d7f5" stroke-width="1.2">
+      <path d="M5 40 L5 5 L60 5"/>
+      <circle cx="5" cy="40" r="3" fill="#39d7f5"/>
+      <circle cx="60" cy="5" r="2" fill="#39d7f5"/>
+    </svg>
+  </div>
+
+  <header>
+    <div class="title-block">
+      <h1>CYBERPURE<br>PASSWORD ANALYZER</h1>
+      <div class="nav-line">
+        <span class="bar"></span><span class="dot"></span>
+        <span>Analyze</span> • <span>Generate</span> • <span>Secure</span>
+        <span class="dot"></span><span class="bar"></span>
+      </div>
+    </div>
+    <div class="status-box" id="statusBox">
+      <span class="lock" id="statusLock">🔒</span>
+      <div>
+        <div class="label">SERVER STATUS</div>
+        <div class="value" id="systemStatus">CHECKING...</div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-label">ENTER YOUR PASSWORD</div>
+    <div class="input-wrap">
+      <input type="password" id="pwInput" placeholder="Enter your password..." autocomplete="off">
+      <button class="eye-btn" id="toggleEye" title="Show/Hide">👁</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">STRENGTH ANALYSIS</div>
+    <div class="strength-row">
+      <div class="track">
+        <div class="fill" id="fillBar"></div>
+        <div class="thumb" id="thumb"></div>
+      </div>
+      <div class="strength-pct">
+        <span class="pct" id="pctText">0%</span>
+        <span class="lvl" id="lvlText">WEAK</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="score-box">
+    <div class="score-label">SECURITY SCORE</div>
+    <div class="score-value"><span class="shield-icon">🛡</span><span id="scoreValue">0</span> <span class="max">/ 100</span></div>
+    <div class="risk-note" id="riskNote">Enter a password to begin analysis</div>
+  </div>
+
+  <div class="grid4">
+    <div class="stat-card">
+      <div class="stat-top"><span class="icon">🔑</span>ENTROPY</div>
+      <div class="stat-main" id="entropyVal">0 bits</div>
+      <div class="stat-sub" id="entropySub">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top"><span class="icon">🛡</span>BREACH STATUS</div>
+      <div class="stat-main" id="breachVal">Not Checked</div>
+      <div class="stat-sub link" id="breachSub">Check Password</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top"><span class="icon">🔒</span>LENGTH</div>
+      <div class="stat-main" id="lengthVal">0 Characters</div>
+      <div class="stat-sub" id="lengthSub">Too Short</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top"><span class="icon">🔥</span>STRENGTH</div>
+      <div class="stat-main" id="strengthVal">Weak</div>
+      <div class="stat-sub" id="strengthSub">Needs Improvement</div>
+    </div>
+  </div>
+
+  <div class="suggestions">
+    <h3>SUGGESTIONS</h3>
+    <ul id="suggestList">
+      <li>Increase password length</li>
+      <li>Include uppercase letters</li>
+      <li>Add numbers and special characters</li>
+      <li>Avoid using common words</li>
+    </ul>
+  </div>
+
+  <button class="generate-btn" id="generateBtn">⚡ GENERATE STRONG PASSWORD</button>
+
+  <footer>
+    <div class="left"><span class="warn-icon">⚠</span> Threats Detected: 0 &nbsp;<span class="status-ok">All Systems Normal</span></div>
+    <div class="center">&gt; CYBER DEFENSE. STRONGER TOMORROWS. &lt;</div>
+    <div class="right">
+      <span>ENG</span>
+      <span>v1.0.0</span>
+      <span id="clock"></span>
+    </div>
+  </footer>
+</div>
+
+<script>
+// Empty base URL tells the browser to drop explicit localhost references and request relatively.
+const API_BASE = '';
+
+const pwInput = document.getElementById('pwInput');
+const toggleEye = document.getElementById('toggleEye');
+const fillBar = document.getElementById('fillBar');
+const thumb = document.getElementById('thumb');
+const pctText = document.getElementById('pctText');
+const lvlText = document.getElementById('lvlText');
+const scoreValue = document.getElementById('scoreValue');
+const riskNote = document.getElementById('riskNote');
+const entropyVal = document.getElementById('entropyVal');
+const entropySub = document.getElementById('entropySub');
+const breachVal = document.getElementById('breachVal');
+const breachSub = document.getElementById('breachSub');
+const lengthVal = document.getElementById('lengthVal');
+const lengthSub = document.getElementById('lengthSub');
+const strengthVal = document.getElementById('strengthVal');
+const strengthSub = document.getElementById('strengthSub');
+const suggestList = document.getElementById('suggestList');
+const generateBtn = document.getElementById('generateBtn');
+const clock = document.getElementById('clock');
+const systemStatus = document.getElementById('systemStatus');
+const statusBox = document.getElementById('statusBox');
+
+const commonWords = ['password','123456','qwerty','letmein','admin','welcome','monkey','dragon','football','iloveyou','abc123'];
+
+// --- Check backend availability on load ---
+async function checkServerHealth(){
+  try{
+    const res = await fetch(`${API_BASE}/api/health`, { method:'GET' });
+    if(res.ok){
+      systemStatus.textContent = 'SECURE';
+      statusBox.classList.remove('offline');
+    } else {
+      throw new Error('bad status');
+    }
+  } catch(err){
+    systemStatus.textContent = 'OFFLINE';
+    statusBox.classList.add('offline');
+  }
+}
+checkServerHealth();
+
+toggleEye.addEventListener('click', () => {
+  pwInput.type = pwInput.type === 'password' ? 'text' : 'password';
+  toggleEye.textContent = pwInput.type === 'password' ? '👁' : '🙈';
+});
+
+function calcEntropy(pw){
+  let poolSize = 0;
+  if(/[a-z]/.test(pw)) poolSize += 26;
+  if(/[A-Z]/.test(pw)) poolSize += 26;
+  if(/[0-9]/.test(pw)) poolSize += 10;
+  if(/[^a-zA-Z0-9]/.test(pw)) poolSize += 32;
+  if(poolSize === 0) return 0;
+  return Math.round(pw.length * Math.log2(poolSize));
+}
+
+function analyze(pw){
+  const len = pw.length;
+
+  breachVal.textContent = 'Not Checked';
+  breachVal.style.color = '';
+  breachSub.textContent = 'Check Password';
+  breachSub.className = 'stat-sub link';
+
+  if(len === 0){
+    fillBar.style.width = '0%';
+    thumb.style.left = '0%';
+    pctText.textContent = '0%';
+    lvlText.textContent = 'WEAK';
+    scoreValue.textContent = '0';
+    riskNote.textContent = 'Enter a password to begin analysis';
+    entropyVal.textContent = '0 bits';
+    entropySub.textContent = '—';
+    lengthVal.textContent = '0 Characters';
+    lengthSub.textContent = 'Too Short';
+    strengthVal.textContent = 'Weak';
+    strengthSub.textContent = 'Needs Improvement';
+    setSuggestions([false,false,false,false,false]);
+    return;
+  }
+
+  const hasLower = /[a-z]/.test(pw);
+  const hasUpper = /[A-Z]/.test(pw);
+  const hasNumber = /[0-9]/.test(pw);
+  const hasSpecial = /[^a-zA-Z0-9]/.test(pw);
+  const isCommon = commonWords.some(w => pw.toLowerCase().includes(w));
+
+  let score = 0;
+  if(len >= 8) score += 20; else score += Math.round((len/8)*20);
+  if(len >= 12) score += 10;
+  if(hasLower) score += 10;
+  if(hasUpper) score += 15;
+  if(hasNumber) score += 15;
+  if(hasSpecial) score += 20;
+  if(!isCommon) score += 10; else score -= 15;
+  score = Math.max(0, Math.min(100, score));
+
+  const entropy = calcEntropy(pw);
+
+  let level, color;
+  if(score < 40){ level = 'WEAK'; color = ['#8a2c2c','#ff6b6b']; }
+  else if(score < 70){ level = 'MEDIUM'; color = ['#8a6a1a','#ffc94a']; }
+  else { level = 'STRONG'; color = ['#1a7a4a','#33e19b']; }
+
+  fillBar.style.width = score + '%';
+  fillBar.style.background = `linear-gradient(90deg, ${color[0]}, ${color[1]})`;
+  thumb.style.left = score + '%';
+  thumb.style.background = color[1];
+  pctText.textContent = score + '%';
+  pctText.style.color = color[1];
+  lvlText.textContent = level;
+  lvlText.style.color = color[1];
+  scoreValue.textContent = score;
+
+  if(score < 40) riskNote.textContent = 'High Risk – Password is easily guessable';
+  else if(score < 70) riskNote.textContent = 'Moderate Risk – Improve for better security';
+  else riskNote.textContent = 'Low Risk – Strong password detected';
+
+  entropyVal.textContent = entropy + ' bits';
+  entropySub.textContent = entropy < 40 ? 'Weak' : entropy < 60 ? 'Moderate' : 'Strong';
+  entropySub.className = 'stat-sub ' + (entropy < 40 ? 'bad' : entropy < 60 ? 'warn' : 'good');
+
+  lengthVal.textContent = len + ' Character' + (len===1?'':'s');
+  if(len < 8){ lengthSub.textContent = 'Too Short'; lengthSub.className='stat-sub warn'; }
+  else if(len < 12){ lengthSub.textContent = 'Good'; lengthSub.className='stat-sub good'; }
+  else { lengthSub.textContent = 'Excellent'; lengthSub.className='stat-sub good'; }
+
+  strengthVal.textContent = level.charAt(0) + level.slice(1).toLowerCase();
+  strengthVal.style.color = color[1];
+  strengthSub.textContent = score < 40 ? 'Needs Improvement' : score < 70 ? 'Needs Improvement' : 'Well Secured';
+
+  setSuggestions([len>=12, hasUpper, hasNumber && hasSpecial, !isCommon, hasLower]);
+}
+
+function setSuggestions(flags){
+  const items = [
+    {text:'Increase password length', ok:flags[0]},
+    {text:'Include uppercase letters', ok:flags[1]},
+    {text:'Add numbers and special characters', ok:flags[2]},
+    {text:'Avoid using common words', ok:flags[3]}
+  ];
+  suggestList.innerHTML = '';
+  items.forEach(it => {
+    const li = document.createElement('li');
+    li.textContent = it.ok ? it.text.replace(/^(Increase|Include|Add|Avoid)/, m => {
+      return {'Increase':'Good','Include':'Has','Add':'Has','Avoid':'No'}[m];
+    }) : it.text;
+    if(it.ok) li.classList.add('ok');
+    suggestList.appendChild(li);
+  });
+}
+
+pwInput.addEventListener('input', () => analyze(pwInput.value));
+
+// --- Breach check ---
+breachSub.addEventListener('click', async () => {
+  const pw = pwInput.value;
+  if(!pw){
+    breachVal.textContent = 'No Password';
+    breachSub.textContent = 'Enter a password first';
+    breachSub.className = 'stat-sub warn';
+    return;
+  }
+
+  breachVal.textContent = 'Checking...';
+  breachSub.textContent = 'Contacting server';
+  breachSub.className = 'stat-sub';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/check-breach`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+
+    const data = await res.json();
+
+    if(!res.ok){
+      breachVal.textContent = 'Error';
+      breachSub.textContent = data.message || 'Could not reach server';
+      breachSub.className = 'stat-sub bad';
+      return;
+    }
+
+    if(data.compromised){
+      breachVal.textContent = 'Compromised';
+      breachVal.style.color = '#ff6b6b';
+      breachSub.textContent = data.message;
+      breachSub.className = 'stat-sub bad';
+    } else {
+      breachVal.textContent = 'Not Found';
+      breachVal.style.color = '#33e19b';
+      breachSub.textContent = data.message;
+      breachSub.className = 'stat-sub good';
+    }
+  } catch (err) {
+    breachVal.textContent = 'Offline';
+    breachVal.style.color = '#ff6b6b';
+    breachSub.textContent = 'Backend not reachable — is Flask running?';
+    breachSub.className = 'stat-sub bad';
+  }
+});
+
+function randChar(set){ return set[Math.floor(Math.random()*set.length)]; }
+generateBtn.addEventListener('click', () => {
+  const lower='abcdefghijklmnopqrstuvwxyz', upper='ABCDEFGHIJKLMNOPQRSTUVWXYZ', nums='0123456789', special='!@#$%^&*()_+-=';
+  let pw = '';
+  pw += randChar(upper); pw += randChar(lower); pw += randChar(nums); pw += randChar(special);
+  const all = lower+upper+nums+special;
+  for(let i=0;i<12;i++) pw += randChar(all);
+  pw = pw.split('').sort(()=>Math.random()-0.5).join('');
+  pwInput.value = pw;
+  pwInput.type = 'text';
+  toggleEye.textContent = '🙈';
+  analyze(pw);
+});
+
+function updateClock(){
+  const now = new Date();
+  let h = now.getHours();
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if(h === 0) h = 12;
+  const dateStr = (now.getMonth()+1) + '/' + now.getDate() + '/' + now.getFullYear();
+  clock.textContent = `${h}:${m} ${ampm} | ${dateStr}`;
+}
+updateClock();
+setInterval(updateClock, 1000*30);
+
+analyze('');
+</script>
+</body>
+</html>
