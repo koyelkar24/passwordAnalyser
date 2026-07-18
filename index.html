@@ -524,9 +524,6 @@
 </div>
 
 <script>
-// Empty base URL tells the browser to drop explicit localhost references and request relatively.
-const API_BASE = '';
-
 const pwInput = document.getElementById('pwInput');
 const toggleEye = document.getElementById('toggleEye');
 const fillBar = document.getElementById('fillBar');
@@ -554,7 +551,7 @@ const commonWords = ['password','123456','qwerty','letmein','admin','welcome','m
 // --- Check backend availability on load ---
 async function checkServerHealth(){
   try{
-    const res = await fetch(`${API_BASE}/api/health`, { method:'GET' });
+    const res = await fetch('/api/health', { method:'GET' });
     if(res.ok){
       systemStatus.textContent = 'SECURE';
       statusBox.classList.remove('offline');
@@ -696,7 +693,7 @@ breachSub.addEventListener('click', async () => {
   breachSub.className = 'stat-sub';
 
   try {
-    const res = await fetch(`${API_BASE}/api/check-breach`, {
+    const res = await fetch('/api/check-breach', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: pw })
@@ -725,7 +722,7 @@ breachSub.addEventListener('click', async () => {
   } catch (err) {
     breachVal.textContent = 'Offline';
     breachVal.style.color = '#ff6b6b';
-    breachSub.textContent = 'Backend not reachable — is Flask running?';
+    breachSub.textContent = 'Backend not reachable';
     breachSub.className = 'stat-sub bad';
   }
 });
